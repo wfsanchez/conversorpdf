@@ -28,8 +28,8 @@ def load_defect_codes(file_path: Path) -> list[str]:
         return []
 
     codes: list[str] = []
-    for raw_line in file_path.read_text(encoding="utf-8").splitlines():
-        code = raw_line.strip().upper()
+    for raw_line in file_path.read_text(encoding="utf-8-sig").splitlines():
+        code = raw_line.lstrip("\ufeff").strip().upper()
         if not code or code.startswith("#"):
             continue
         codes.append(code)
@@ -87,3 +87,4 @@ async def extract_text(file: UploadFile = File(...)) -> dict[str, object]:
         "plazo": extract_plazo(full_text),
         "defectos": extract_defectos(full_text),
     }
+
