@@ -1,5 +1,6 @@
 ﻿import re
 from io import BytesIO
+from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from pypdf import PdfReader
@@ -7,6 +8,7 @@ from pypdf import PdfReader
 app = FastAPI(title="PDF Text Extractor API", version="1.0.0")
 PLAZO_NOT_FOUND = "NOT_FOUND"
 PLAZO_PATTERN = re.compile(r"en\s+el\s+plazo\s+m[aá]ximo\s+de\s+(\d+)\s+mes(?:es)?", re.IGNORECASE)
+DEFECT_CODES_FILE = Path(__file__).with_name("defect_codes.txt")
 
 
 @app.get("/health")
@@ -19,6 +21,42 @@ def extract_plazo(text: str) -> int | str:
     if not match:
         return PLAZO_NOT_FOUND
     return int(match.group(1))
+
+
+def load_defect_codes(file_path: Path) -> list[str]:
+    if not file_path.exists():
+        return []
+
+    codes: list[str] = []
+    for raw_line in file_path.read_text(encoding="utf-8").splitlines():
+        code = raw_line.strip().upper()
+        if not code or code.startswith("#"):
+            continue
+        codes.append(code)
+    return codes
+
+
+DEFECT_CODES = load_defect_codes(DEFECT_CODES_FILE)
+DEFECT_CODES_PATTERN = (
+    re.compile(r"\b(?:{})\b".format("|".join(re.escape(code) for code in DEFECT_CODES)), re.IGNORECASE)
+    if DEFECT_CODES
+    else None
+)
+
+
+def extract_defectos(text: str) -> list[str]:
+    if DEFECT_CODES_PATTERN is None:
+        return []
+
+    found_codes: list[str] = []
+    seen: set[str] = set()
+    for match in DEFECT_CODES_PATTERN.finditer(text):
+        code = match.group(0).upper()
+        if code in seen:
+            continue
+        seen.add(code)
+        found_codes.append(code)
+    return found_codes
 
 
 @app.post("/extract-text")
@@ -47,4 +85,5 @@ async def extract_text(file: UploadFile = File(...)) -> dict[str, object]:
         "pages": len(reader.pages),
         "text": full_text,
         "plazo": extract_plazo(full_text),
+        "defectos": extract_defectos(full_text),
     }

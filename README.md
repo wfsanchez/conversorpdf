@@ -27,13 +27,19 @@ Respuesta:
   "filename": "documento.pdf",
   "pages": 3,
   "text": "...texto extraido...",
-  "plazo": 12
+  "plazo": 12,
+  "defectos": ["B07G", "B08G"]
 }
 ```
 
 `plazo`:
 - numero entero si encuentra `en el plazo maximo de X meses`
 - `NOT_FOUND` si no encuentra el patron
+
+`defectos`:
+- array con los codigos encontrados en el texto del PDF
+- los codigos se cargan desde `app/defect_codes.txt` (uno por linea)
+- se ignoran lineas vacias o que empiezan por `#`
 
 ## Prueba rapida con curl
 ```bash
