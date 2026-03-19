@@ -26,9 +26,14 @@ Respuesta:
 {
   "filename": "documento.pdf",
   "pages": 3,
-  "text": "...texto extraido..."
+  "text": "...texto extraido...",
+  "plazo": 12
 }
 ```
+
+`plazo`:
+- numero entero si encuentra `en el plazo maximo de X meses`
+- `NOT_FOUND` si no encuentra el patron
 
 ## Prueba rapida con curl
 ```bash
