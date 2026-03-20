@@ -38,7 +38,7 @@ def load_defect_codes(file_path: Path) -> list[str]:
 
 DEFECT_CODES = load_defect_codes(DEFECT_CODES_FILE)
 DEFECT_CODES_PATTERN = (
-    re.compile(r"\b(?:{})\b".format("|".join(re.escape(code) for code in DEFECT_CODES)), re.IGNORECASE)
+    re.compile(r"(?:^|\n)\s*(?P<code>{})\b".format("|".join(re.escape(code) for code in DEFECT_CODES)), re.IGNORECASE)
     if DEFECT_CODES
     else None
 )
@@ -51,7 +51,7 @@ def extract_defectos(text: str) -> list[str]:
     found_codes: list[str] = []
     seen: set[str] = set()
     for match in DEFECT_CODES_PATTERN.finditer(text):
-        code = match.group(0).upper()
+        code = match.group("code").upper()
         if code in seen:
             continue
         seen.add(code)
@@ -87,4 +87,6 @@ async def extract_text(file: UploadFile = File(...)) -> dict[str, object]:
         "plazo": extract_plazo(full_text),
         "defectos": extract_defectos(full_text),
     }
+
+
 
