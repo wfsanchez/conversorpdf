@@ -86,6 +86,7 @@ async def extract_text(file: UploadFile = File(...)) -> dict[str, object]:
         "text": full_text,
         "plazo": extract_plazo(full_text),
         "defectos": extract_defectos(full_text),
+         "RAE": "RAE1234567890",
     }
 
 
