@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"m:/Trabajo/Wattyo/FAIN/conversorpdf\" -name \"*.py\" -not -path \"*/.venv/*\" -not -path \"*\\\\\\\\.venv\\\\\\\\*\")"
+    ]
+  }
+}

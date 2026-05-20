@@ -9,6 +9,8 @@ app = FastAPI(title="PDF Text Extractor API", version="1.0.0")
 PLAZO_NOT_FOUND = "NOT_FOUND"
 PLAZO_PATTERN = re.compile(r"en\s+el\s+plazo\s+m[aá]ximo\s+de\s+(\d+)\s+mes(?:es)?", re.IGNORECASE)
 DEFECT_CODES_FILE = Path(__file__).with_name("defect_codes.txt")
+RAE_NOT_FOUND = "005256"
+RAE_PATTERN = re.compile(r"RAE\s*:?\s*([A-Z0-9]{1,4}[-/]\d+)", re.IGNORECASE)
 
 
 @app.get("/health")
@@ -42,6 +44,13 @@ DEFECT_CODES_PATTERN = (
     if DEFECT_CODES
     else None
 )
+
+
+def extract_rae(text: str) -> str:
+    match = RAE_PATTERN.search(text)
+    if not match:
+        return RAE_NOT_FOUND
+    return match.group(1).upper()
 
 
 def extract_defectos(text: str) -> list[str]:
@@ -86,7 +95,7 @@ async def extract_text(file: UploadFile = File(...)) -> dict[str, object]:
         "text": substr(full_text, 0, 100),  # Limit text length
         "plazo": extract_plazo(full_text),
         "defectos": extract_defectos(full_text),
-         "RAE": "RAE1234567890",
+        "RAE": extract_rae(full_text),
     }
 
 
