@@ -84,7 +84,7 @@ async def extract_text(file: UploadFile = File(...)) -> dict[str, object]:
 
     page_texts: list[str] = []
     for page in reader.pages:
-        text = page.extract_text() or ""
+        text = page.extract_text(extraction_mode="layout") or ""
         page_texts.append(text)
 
     full_text = "\n".join(page_texts).strip()
