@@ -10,7 +10,7 @@ PLAZO_NOT_FOUND = "NOT_FOUND"
 PLAZO_PATTERN = re.compile(r"en\s+el\s+plazo\s+m[aá]ximo\s+de\s+(\d+)\s+mes(?:es)?", re.IGNORECASE)
 DEFECT_CODES_FILE = Path(__file__).with_name("defect_codes.txt")
 RAE_NOT_FOUND = "005256"
-RAE_PATTERN = re.compile(r"RAE\s*:?\s*([A-Z0-9]{1,4}[-/]\d+)", re.IGNORECASE)
+RAE_PATTERN = re.compile(r"RAE\s*:?\s*([A-Z0-9]{1,4}[-/]\d+|\d+)", re.IGNORECASE)
 
 
 @app.get("/health")
