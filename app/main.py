@@ -92,7 +92,7 @@ async def extract_text(file: UploadFile = File(...)) -> dict[str, object]:
     return {
         "filename": file.filename,
         "pages": len(reader.pages),
-        "text": substr(full_text, 0, 100),  # Limit text length
+        "text": full_text[:100],
         "plazo": extract_plazo(full_text),
         "defectos": extract_defectos(full_text),
         "RAE": extract_rae(full_text),
