@@ -1,16 +1,17 @@
-﻿import re
+import re
 from io import BytesIO
 from pathlib import Path
 
+import pdfplumber
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from pypdf import PdfReader
 
 app = FastAPI(title="PDF Text Extractor API", version="1.0.0")
 PLAZO_NOT_FOUND = "NOT_FOUND"
 PLAZO_PATTERN = re.compile(r"en\s+el\s+plazo\s+m[aá]ximo\s+de\s+(\d+)\s+mes(?:es)?", re.IGNORECASE)
 DEFECT_CODES_FILE = Path(__file__).with_name("defect_codes.txt")
 RAE_NOT_FOUND = "005256"
-RAE_PATTERN = re.compile(r"RAE\s*:?\s*([A-Z0-9]{1,4}[-/]\d+|\d+)", re.IGNORECASE)
+# Matches "RAE: 124716", "RAE: 1 24716" (space artifact), "RAE: SE-012345", "RAE: 28/123456"
+RAE_PATTERN = re.compile(r"RAE\s*:?\s*([A-Z0-9]+(?:[ \-/][A-Z0-9]+)?)", re.IGNORECASE)
 
 
 @app.get("/health")
@@ -31,7 +32,7 @@ def load_defect_codes(file_path: Path) -> list[str]:
 
     codes: list[str] = []
     for raw_line in file_path.read_text(encoding="utf-8-sig").splitlines():
-        code = raw_line.lstrip("\ufeff").strip().upper()
+        code = raw_line.lstrip("﻿").strip().upper()
         if not code or code.startswith("#"):
             continue
         codes.append(code)
@@ -50,7 +51,7 @@ def extract_rae(text: str) -> str:
     match = RAE_PATTERN.search(text)
     if not match:
         return RAE_NOT_FOUND
-    return match.group(1).upper()
+    return re.sub(r"\s+", "", match.group(1)).upper()
 
 
 def extract_defectos(text: str) -> list[str]:
@@ -78,25 +79,24 @@ async def extract_text(file: UploadFile = File(...)) -> dict[str, object]:
         raise HTTPException(status_code=400, detail="El archivo esta vacio.")
 
     try:
-        reader = PdfReader(BytesIO(data))
+        pdf = pdfplumber.open(BytesIO(data))
     except Exception as exc:
         raise HTTPException(status_code=400, detail="No se pudo leer el PDF.") from exc
 
     page_texts: list[str] = []
-    for page in reader.pages:
-        text = page.extract_text(extraction_mode="layout") or ""
-        page_texts.append(text)
+    with pdf:
+        num_pages = len(pdf.pages)
+        for page in pdf.pages:
+            text = page.extract_text() or ""
+            page_texts.append(text)
 
     full_text = "\n".join(page_texts).strip()
 
     return {
         "filename": file.filename,
-        "pages": len(reader.pages),
+        "pages": num_pages,
         "text": full_text[:100],
         "plazo": extract_plazo(full_text),
         "defectos": extract_defectos(full_text),
         "RAE": extract_rae(full_text),
     }
-
-
-
